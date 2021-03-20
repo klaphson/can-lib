@@ -1,6 +1,9 @@
 #include <stdint.h>
 
-class Can {
+#include "can-package.h"
+
+class Can
+{
 public:
-  Can();
+    Can();
 };

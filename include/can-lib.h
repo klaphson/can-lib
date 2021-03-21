@@ -11,17 +11,17 @@
 class CanBus
 {
 public:
-    CanBus(const char* ifName);
+    CanBus(const char* ifName, CanError_t& error);
     ~CanBus(void);
 
-    void Connect(void);
+    void Connect(CanError_t& error);
     void Disconnect(void);
 
     bool IsConnected(void) const;
 
-    bool SendPackage(const CanPackage& package) const;
+    bool SendPackage(const CanPackage& package, CanError_t& error) const;
 
-    CanPackage ReadPackage(void) const;
+    CanPackage ReadPackage(CanError_t& error) const;
 
 private:
     struct ifreq mIfreq;

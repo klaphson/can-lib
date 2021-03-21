@@ -1,7 +1,9 @@
 #include "can-lib.h"
 
-CanBus::CanBus(const char* ifName) : mIfreq(), mAddr(), mFileDescriptor(0)
+CanBus::CanBus(const char* ifName, CanError_t& error) : mIfreq(), mAddr(), mFileDescriptor(0)
 {
+    error = eNoError;
+
     if (ifName != NULL)
     {
         size_t stringLength = strlen(ifName);
@@ -9,20 +11,19 @@ CanBus::CanBus(const char* ifName) : mIfreq(), mAddr(), mFileDescriptor(0)
         if (stringLength <= IFNAMSIZ)
         {
             strcpy(mIfreq.ifr_ifrn.ifrn_name, ifName);
+            Connect(error);
         }
         else
         {
-            perror("Given If name is too long! ");
-            throw eGivenIfNameTooLong;
+            fprintf(stderr, "Given If name is too long!");
+            error = eGivenIfNameTooLong;
         }
     }
     else
     {
-        perror("Given If name is NULL! ");
-        throw eGivenIfNameIsNULL;
+        fprintf(stderr, "Given If name is NULL! ");
+        error = eGivenIfNameIsNULL;
     }
-
-    Connect();
 }
 
 CanBus::~CanBus(void)
@@ -30,26 +31,29 @@ CanBus::~CanBus(void)
     Disconnect();
 }
 
-void CanBus::Connect(void)
+void CanBus::Connect(CanError_t& error)
 {
+    error = eNoError;
     mFileDescriptor = socket(PF_CAN, SOCK_RAW, CAN_RAW);
 
     if (mFileDescriptor < 0)
     {
         perror("Can not create file descriptor! ");
-        throw eCanNotCreateFileDescriptor;
+        error = eCanNotCreateFileDescriptor;
     }
-
-    ioctl(mFileDescriptor, SIOCGIFINDEX, &mIfreq);
-
-    memset(&mAddr, 0, sizeof(mAddr));
-    mAddr.can_family = AF_CAN;
-    mAddr.can_ifindex = mIfreq.ifr_ifindex;
-
-    if (bind(mFileDescriptor, (struct sockaddr*) &mAddr, sizeof(mAddr)) < 0)
+    else
     {
-        perror("Can not bind socket! ");
-        throw eCanNotBind;
+        ioctl(mFileDescriptor, SIOCGIFINDEX, &mIfreq);
+
+        memset(&mAddr, 0, sizeof(mAddr));
+        mAddr.can_family = AF_CAN;
+        mAddr.can_ifindex = mIfreq.ifr_ifindex;
+
+        if (bind(mFileDescriptor, (struct sockaddr*) &mAddr, sizeof(mAddr)) < 0)
+        {
+            perror("Can not bind socket! ");
+            error = eCanNotBind;
+        }
     }
 }
 
@@ -73,8 +77,9 @@ bool CanBus::IsConnected(void) const
     return isConnected;
 }
 
-bool CanBus::SendPackage(const CanPackage& package) const
+bool CanBus::SendPackage(const CanPackage& package, CanError_t& error) const
 {
+    error = eNoError;
     bool packageSent = false;
     const bool isConnected = IsConnected();
 
@@ -85,37 +90,44 @@ bool CanBus::SendPackage(const CanPackage& package) const
 
         if (bytesSent != sizeof(struct can_frame))
         {
-            perror("Error while writing ");
-            throw eCanNotWriteToFileDescriptor;
+            perror("Error while writing! ");
+            error = eCanNotWriteToFileDescriptor;
         }
 
         packageSent = true;
     }
     else
     {
-        perror("Connection is broken!");
+        fprintf(stderr, "Connection is broken!");
     }
 
     return packageSent;
 }
 
-CanPackage CanBus::ReadPackage(void) const
+CanPackage CanBus::ReadPackage(CanError_t& error) const
 {
+    error = eNoError;
+    CanPackage package;
     struct can_frame frame;
 
     ssize_t bytesRead = read(mFileDescriptor, &frame, sizeof(struct can_frame));
 
     if (bytesRead < 0)
     {
-        perror("Error while reading ");
-        throw eCanNotReadFromFileDescriptor;
+        perror("Error while reading! ");
+        error = eCanNotReadFromFileDescriptor;
     }
 
-    if (bytesRead < sizeof(struct can_frame))
+    if ((bytesRead < sizeof(struct can_frame)) && (error == eNoError))
     {
         fprintf(stderr, "Incomplete CAN frame\n");
-        throw eIncompleteFrameWasRead;
+        error = eIncompleteFrameWasRead;
     }
 
-    return CanPackage(frame.can_id, frame.can_dlc, frame.data);
+    if (error == eNoError)
+    {
+        package = CanPackage(frame.can_id, frame.can_dlc, frame.data, error);
+    }
+
+    return package;
 }

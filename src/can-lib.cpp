@@ -22,6 +22,16 @@ CanBus::CanBus(const char* ifName) : mIfreq(), mAddr(), mFileDescriptor(0)
         throw eGivenIfNameIsNULL;
     }
 
+    Connect();
+}
+
+CanBus::~CanBus(void)
+{
+    Disconnect();
+}
+
+void CanBus::Connect(void)
+{
     mFileDescriptor = socket(PF_CAN, SOCK_RAW, CAN_RAW);
 
     if (mFileDescriptor < 0)
@@ -43,7 +53,7 @@ CanBus::CanBus(const char* ifName) : mIfreq(), mAddr(), mFileDescriptor(0)
     }
 }
 
-CanBus::~CanBus(void)
+void CanBus::Disconnect(void)
 {
     close(mFileDescriptor);
 }
@@ -61,4 +71,30 @@ bool CanBus::IsConnected(void) const
     }
 
     return isConnected;
+}
+
+bool CanBus::SendPackage(const CanPackage& package) const
+{
+    bool packageSent = false;
+    const bool isConnected = IsConnected();
+
+    if (isConnected)
+    {
+        struct can_frame frame = package.GetFrame();
+        ssize_t bytesSent = write(mFileDescriptor, &frame, sizeof(struct can_frame));
+
+        if (bytesSent != sizeof(struct can_frame))
+        {
+            perror("Error during writing ");
+            throw eCanNotWriteToFileDescriptor;
+        }
+
+        packageSent = true;
+    }
+    else
+    {
+        perror("Connection is broken!");
+    }
+
+    return packageSent;
 }

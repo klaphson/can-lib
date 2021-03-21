@@ -13,10 +13,7 @@ CanPackage::CanPackage(const uint32_t id, const uint8_t length, const uint8_t* d
         throw eCanPackageLentghTooBig;
     }
 
-    for (uint8_t i = 0U; i < length; i++)
-    {
-        mCanPackage.data[i] = data[i];
-    }
+    memcpy(mCanPackage.data, data, length);
 }
 
 void CanPackage::Print(void) const

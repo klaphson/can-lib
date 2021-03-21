@@ -3,6 +3,7 @@
 
 #include <linux/can.h>
 
+#include <cstring>
 #include <stdint.h>
 #include <stdio.h>
 

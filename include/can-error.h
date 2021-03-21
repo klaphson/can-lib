@@ -8,7 +8,8 @@ enum CanError_t
     eGivenIfNameIsNULL,
     eGivenIfNameTooLong,
     eCanNotCreateFileDescriptor,
-    eCanNotBind
+    eCanNotBind,
+    eCanNotWriteToFileDescriptor
 };
 
 #endif // CAN_ERROR_H

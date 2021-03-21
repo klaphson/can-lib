@@ -85,7 +85,7 @@ bool CanBus::SendPackage(const CanPackage& package) const
 
         if (bytesSent != sizeof(struct can_frame))
         {
-            perror("Error during writing ");
+            perror("Error while writing ");
             throw eCanNotWriteToFileDescriptor;
         }
 
@@ -97,4 +97,25 @@ bool CanBus::SendPackage(const CanPackage& package) const
     }
 
     return packageSent;
+}
+
+CanPackage CanBus::ReadPackage(void) const
+{
+    struct can_frame frame;
+
+    ssize_t bytesRead = read(mFileDescriptor, &frame, sizeof(struct can_frame));
+
+    if (bytesRead < 0)
+    {
+        perror("Error while reading ");
+        throw eCanNotReadFromFileDescriptor;
+    }
+
+    if (bytesRead < sizeof(struct can_frame))
+    {
+        fprintf(stderr, "Incomplete CAN frame\n");
+        throw eIncompleteFrameWasRead;
+    }
+
+    return CanPackage(frame.can_id, frame.can_dlc, frame.data);
 }

@@ -15,6 +15,7 @@ class CanPackage
 {
 public:
     CanPackage(const uint32_t id, const uint8_t size, const uint8_t* data);
+    CanPackage(const CanPackage& package);
 
     void Print(void) const;
 

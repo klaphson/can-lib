@@ -21,6 +21,8 @@ public:
 
     bool SendPackage(const CanPackage& package) const;
 
+    CanPackage ReadPackage(void) const;
+
 private:
     struct ifreq mIfreq;
     struct sockaddr_can mAddr;

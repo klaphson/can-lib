@@ -9,7 +9,9 @@ enum CanError_t
     eGivenIfNameTooLong,
     eCanNotCreateFileDescriptor,
     eCanNotBind,
-    eCanNotWriteToFileDescriptor
+    eCanNotWriteToFileDescriptor,
+    eCanNotReadFromFileDescriptor,
+    eIncompleteFrameWasRead
 };
 
 #endif // CAN_ERROR_H

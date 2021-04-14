@@ -1,3 +1,6 @@
+#ifndef CAN_LIB_H
+#define CAN_LIB_H
+
 #include <net/if.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -28,3 +31,5 @@ private:
     struct sockaddr_can mAddr;
     int32_t mFileDescriptor;
 };
+
+#endif // CAN_LIB_H

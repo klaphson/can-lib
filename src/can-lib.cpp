@@ -106,27 +106,32 @@ bool CanBus::SendPackage(const CanPackage& package, CanError_t& error) const
 
 CanPackage CanBus::ReadPackage(CanError_t& error) const
 {
-    error = eNoError;
+    error = eUnknownError;
     CanPackage package;
     struct can_frame frame;
 
     ssize_t bytesRead = read(mFileDescriptor, &frame, sizeof(struct can_frame));
 
-    if (bytesRead < 0)
-    {
-        perror("Error while reading! ");
-        error = eCanNotReadFromFileDescriptor;
-    }
-
-    if ((bytesRead < sizeof(struct can_frame)) && (error == eNoError))
-    {
-        fprintf(stderr, "Incomplete CAN frame\n");
-        error = eIncompleteFrameWasRead;
-    }
-
-    if (error == eNoError)
+    if (bytesRead == sizeof(struct can_frame))
     {
         package = CanPackage(frame.can_id, frame.can_dlc, frame.data, error);
+        error = eNoError;
+    }
+    else
+    {
+        if (bytesRead < 0)
+        {
+            perror("Error while reading! ");
+            error = eCanNotReadFromFileDescriptor;
+        }
+        else if (bytesRead < sizeof(struct can_frame))
+        {
+            fprintf(stderr, "Incomplete CAN frame\n");
+            error = eIncompleteFrameWasRead;
+        }
+        else
+        {
+        }
     }
 
     return package;

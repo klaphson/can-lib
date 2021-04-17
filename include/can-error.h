@@ -4,6 +4,7 @@
 enum CanError_t
 {
     eNoError,
+    eUnknownError,
     eCanPackageLentghTooBig,
     eGivenIfNameIsNULL,
     eGivenIfNameTooLong,
